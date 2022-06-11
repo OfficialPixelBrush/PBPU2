@@ -1,4 +1,5 @@
 # PBPU2
+A 4-Bit Fantasy CPU with basic I/O.
  
  ### Registers
 | Letter | Name            | Size  |
