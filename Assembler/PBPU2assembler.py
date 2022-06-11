@@ -2,12 +2,25 @@ import os
 import re
 import sys
 
-filePath = "helloWorld.asm"
+filePath = sys.argv[1]#"helloWorld.asm"
 f_name, f_ext = os.path.splitext(filePath);
+
+def checkIntHex(str):
+    try:
+        int(str,16)
+        return True
+    except ValueError:
+        return False
+    
+def checkInt(str):
+    try:
+        int(str)
+        return True
+    except ValueError:
+        return False
 
 try:
     t = open(filePath,"r")
-    #t = open(sys.argv[1], "r")
     text = t.read()
     text = text.upper()
     text = re.sub(';.*?\n', '\n', text)
@@ -19,7 +32,54 @@ except:
     exit()
 
 final=[]
+labelName=[]
+labelPos =[]
+pos = 0 # for getting length of code
 
+print("First Pass...")
+# First pass to figure out where each Label will go
+for i,e in enumerate(text):
+    if e[0] == ':':
+        labelName.append(re.sub(':', '', text[i]))
+        labelPos.append(pos)
+        text.remove(e)
+    if (e=="NOP"):
+        pos += 1
+    if (e=="LDAN"):
+        pos += 2
+    if (e=="LDAM"):
+        pos += 4
+    if (e=="STA"):
+        pos += 4
+    if (e=="SWAP"):
+        pos += 1
+    if (e=="SHFT"):
+        pos += 1
+    if (e=="ADD"):
+        pos += 1
+    if (e=="SUB"):
+        pos += 1
+    if (e=="AND"):
+        pos += 1
+    if (e=="OR"):
+        pos += 1
+    if (e=="XOR"):
+        pos += 1
+    if (e=="IN"):
+        pos += 1
+    if (e=="OUT"):
+        pos += 1
+    if (e=="JP"):
+        pos += 4
+    if (e=="JPC"):
+        pos += 4
+    if (e=="JPZ"):
+        pos += 4
+    if (e=="STR"): # String insertion
+        pos += len(text[i+1])*2
+
+print("Second Pass...")
+# Second Pass for actual compilation
 for i,e in enumerate(text):
     # Instructions
     if (e=="NOP"):
@@ -30,16 +90,37 @@ for i,e in enumerate(text):
         final.append(num)
     if (e=="LDAM"):
         final.append(2)
-        temp = int(text[i+1],16)
+        if checkIntHex(text[i+1]): # if it's a number, write number
+            temp = int(text[i+1],16)
+        else: # if it's not a number, it must be a label
+            # tokenize operators
+            token = re.split('(\W)', text[i+1])
+            # turn labels into addresses
+            for index,label in enumerate(token):
+                if (not checkInt(label)) or (not checkIntHex(label)):
+                    if (label != ( '+' or '-' or '*' or '/') ):
+                        token[index] = str(labelName.index(label))
+            temp = (eval(''.join(token)))
         num = (int(temp) & 0b111100000000) >> 8
         final.append(num)
         num = (int(temp) & 0b000011110000) >> 4
         final.append(num)
         num = (int(temp) & 0b000000001111)
         final.append(num)
+            
     if (e=="STA"):
         final.append(3)
-        temp = int(text[i+1],16)
+        if checkIntHex(text[i+1]): # if it's a number, write number
+            temp = int(text[i+1],16)
+        else: # if it's not a number, it must be a label
+            # tokenize operators
+            token = re.split('(\W)', text[i+1])
+            # turn labels into addresses
+            for index,label in enumerate(token):
+                if (not checkInt(label)) or (not checkIntHex(label)):
+                    if (label != ( '+' or '-' or '*' or '/') ):
+                        token[index] = str(labelName.index(label))
+            temp = (eval(''.join(token)))
         num = (int(temp) & 0b111100000000) >> 8
         final.append(num)
         num = (int(temp) & 0b000011110000) >> 4
@@ -66,7 +147,17 @@ for i,e in enumerate(text):
         final.append(12)
     if (e=="JP"):
         final.append(13)
-        temp = int(text[i+1],16)
+        if checkIntHex(text[i+1]): # if it's a number, write number
+            temp = int(text[i+1],16)
+        else: # if it's not a number, it must be a label
+            # tokenize operators
+            token = re.split('(\W)', text[i+1])
+            # turn labels into addresses
+            for index,label in enumerate(token):
+                if (not checkInt(label)) or (not checkIntHex(label)):
+                    if (label != ( '+' or '-' or '*' or '/') ):
+                        token[index] = str(labelName.index(label))
+            temp = (eval(''.join(token)))
         num = (int(temp) & 0b111100000000) >> 8
         final.append(num)
         num = (int(temp) & 0b000011110000) >> 4
@@ -75,7 +166,17 @@ for i,e in enumerate(text):
         final.append(num)
     if (e=="JPC"):
         final.append(14)
-        temp = text[i+1]
+        if checkIntHex(text[i+1]): # if it's a number, write number
+            temp = int(text[i+1],16)
+        else: # if it's not a number, it must be a label
+            # tokenize operators
+            token = re.split('(\W)', text[i+1])
+            # turn labels into addresses
+            for index,label in enumerate(token):
+                if (not checkInt(label)) or (not checkIntHex(label)):
+                    if (label != ( '+' or '-' or '*' or '/') ):
+                        token[index] = str(labelName.index(label))
+            temp = (eval(''.join(token)))
         num = (int(temp) & 0b111100000000) >> 8
         final.append(num)
         num = (int(temp) & 0b000011110000) >> 4
@@ -84,7 +185,17 @@ for i,e in enumerate(text):
         final.append(num)
     if (e=="JPZ"):
         final.append(15)
-        temp = text[i+1]
+        if checkIntHex(text[i+1]): # if it's a number, write number
+            temp = int(text[i+1],16)
+        else: # if it's not a number, it must be a label
+            # tokenize operators
+            token = re.split('(\W)', text[i+1])
+            # turn labels into addresses
+            for index,label in enumerate(token):
+                if (not checkInt(label)) or (not checkIntHex(label)):
+                    if (label != ( '+' or '-' or '*' or '/') ):
+                        token[index] = str(labelName.index(label))
+            temp = (eval(''.join(token)))
         num = (int(temp) & 0b111100000000) >> 8
         final.append(num)
         num = (int(temp) & 0b000011110000) >> 4
@@ -96,13 +207,10 @@ for i,e in enumerate(text):
             final.append(ord(element) & 0b00001111)
             final.append((ord(element) & 0b11110000) >> 4)
 
-
 output = open(f_name + ".pbpu2" ,'wb')
-
-print(final)
 
 for i in final:
     i = i.to_bytes(1, 'little')
     output.write(i)
 output.close()
-
+print("Finished.")
